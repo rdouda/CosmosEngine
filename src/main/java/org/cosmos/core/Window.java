@@ -5,7 +5,10 @@ import org.cosmos.core.game.LevelScene;
 import org.cosmos.utils.Time;
 import org.lwjgl.glfw.GLFWErrorCallback;
 import org.lwjgl.glfw.GLFWImage;
+import org.lwjgl.glfw.GLFWVidMode;
 import org.lwjgl.opengl.GL;
+import org.lwjgl.system.MemoryUtil;
+
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
@@ -15,10 +18,13 @@ public class Window {
     private String title;
     private long glfwWindow;
     private static Window window = null;
+    private boolean IsFullscreen;
     public static Scene CurrentScene;
+
     private Window() {
-        this.width = 1920;
-        this.height = 1080;
+        this.width = 1920 / 2;
+        this.height = 1080 / 2;
+        this.IsFullscreen = false;
         this.title = "Cosmos Engine";
     }
     public static Window get() {
@@ -58,10 +64,18 @@ public class Window {
         glfwDefaultWindowHints();
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-        glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
-        glfwWindow = glfwCreateWindow(this.width, this.height, this.title, NULL, NULL);
-        if (glfwWindow == NULL) {
+        glfwWindowHint(GLFW_MAXIMIZED, GLFW_FALSE);
+        if(IsFullscreen)
+            glfwWindowHint(GLFW_MAXIMIZED, GLFW_TRUE);
+        glfwWindow = glfwCreateWindow(this.width, this.height, this.title, MemoryUtil.NULL, MemoryUtil.NULL);
+        if (glfwWindow == MemoryUtil.NULL) {
             throw new IllegalStateException("Failed to create the GLFW window.");
+        }
+
+        if(!IsFullscreen)
+        {
+            GLFWVidMode vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+            glfwSetWindowPos(glfwWindow, (vidMode.width() - this.width) / 2, (vidMode.height() - this.height) / 2);
         }
 
         glfwMakeContextCurrent(glfwWindow);
@@ -87,5 +101,9 @@ public class Window {
             DeltaTime = EndTime - BeginTime;
             BeginTime = EndTime;
         }
+    }
+    public void CleanUp()
+    {
+        glfwDestroyWindow(glfwWindow);
     }
 }
