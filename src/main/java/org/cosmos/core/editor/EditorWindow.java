@@ -1,5 +1,6 @@
 package org.cosmos.core.editor;
 
+import org.cosmos.core.KeyboardListener;
 import org.cosmos.core.Scene;
 import org.lwjgl.BufferUtils;
 
