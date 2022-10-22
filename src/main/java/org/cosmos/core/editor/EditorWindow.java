@@ -1,7 +1,6 @@
 package org.cosmos.core.editor;
-
-import org.cosmos.core.KeyboardListener;
 import org.cosmos.core.Scene;
+import org.cosmos.core.renderer.Shader;
 import org.lwjgl.BufferUtils;
 
 import java.nio.FloatBuffer;
@@ -11,20 +10,6 @@ import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
 public class EditorWindow extends Scene {
-
-    private final String vertexShaderSrc    = """
-            #version 330 core
-            layout (location=0) in vec3 aPos;
-            layout (location=1) in vec4 aColor;
-            out vec4 fColor;
-            void main() { fColor = aColor; gl_Position = vec4(aPos, 1.0); }""";
-    private final String fragmentShaderSrc  = """
-            #version 330 core
-            in vec4 fColor;
-            out vec4 color;
-            void main() { color = fColor; }""";
-    private int vertexID, fragmentID, shaderProgram;
-
     private final float[] vertexArray = {
             // position               // color
             0.5f, -0.5f, 0.0f,       1.0f, 0.0f, 0.0f, 1.0f,
@@ -38,6 +23,7 @@ public class EditorWindow extends Scene {
             0, 1, 3 // bottom left triangle
     };
 
+    private Shader DefaultShader;
     private int vaoID, vboID, eboID;
 
     public EditorWindow() {
@@ -47,42 +33,8 @@ public class EditorWindow extends Scene {
     @Override
     public void Init() {
 
-        vertexID = glCreateShader(GL_VERTEX_SHADER);
-        glShaderSource(vertexID, vertexShaderSrc);
-        glCompileShader(vertexID);
-
-        int success = glGetShaderi(vertexID, GL_COMPILE_STATUS);
-        if (success == GL_FALSE) {
-            int len = glGetShaderi(vertexID, GL_INFO_LOG_LENGTH);
-            System.out.println("ERROR: 'defaultShader.glsl'\n\tVertex shader compilation failed.");
-            System.out.println(glGetShaderInfoLog(vertexID, len));
-            assert false : "";
-        }
-
-        fragmentID = glCreateShader(GL_FRAGMENT_SHADER);
-        glShaderSource(fragmentID, fragmentShaderSrc);
-        glCompileShader(fragmentID);
-
-        success = glGetShaderi(fragmentID, GL_COMPILE_STATUS);
-        if (success == GL_FALSE) {
-            int len = glGetShaderi(fragmentID, GL_INFO_LOG_LENGTH);
-            System.out.println("ERROR: 'defaultShader.glsl'\n\tFragment shader compilation failed.");
-            System.out.println(glGetShaderInfoLog(fragmentID, len));
-            assert false : "";
-        }
-
-        shaderProgram = glCreateProgram();
-        glAttachShader(shaderProgram, vertexID);
-        glAttachShader(shaderProgram, fragmentID);
-        glLinkProgram(shaderProgram);
-
-        success = glGetProgrami(shaderProgram, GL_LINK_STATUS);
-        if (success == GL_FALSE) {
-            int len = glGetProgrami(shaderProgram, GL_INFO_LOG_LENGTH);
-            System.out.println("ERROR: 'defaultShader.glsl'\n\tLinking of shaders failed.");
-            System.out.println(glGetProgramInfoLog(shaderProgram, len));
-            assert false : "";
-        }
+        DefaultShader = new Shader("assets/shaders/default.glsl");
+        DefaultShader.Compile();
 
 
         vaoID = glGenVertexArrays();
@@ -115,7 +67,7 @@ public class EditorWindow extends Scene {
 
     @Override
     public void Update(float dt) {
-        glUseProgram(shaderProgram);
+        DefaultShader.Use();
         glBindVertexArray(vaoID);
         glEnableVertexAttribArray(0);
         glEnableVertexAttribArray(1);
@@ -123,6 +75,6 @@ public class EditorWindow extends Scene {
         glDisableVertexAttribArray(0);
         glDisableVertexAttribArray(1);
         glBindVertexArray(0);
-        glUseProgram(0);
+        DefaultShader.Detach();
     }
 }
